@@ -172,5 +172,5 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'test':
         unittest.main(argv=['first-arg-is-ignored'], exit=False)
     else:
-        pass
+        app.run(debug=True)
 
