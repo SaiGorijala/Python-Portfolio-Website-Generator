@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portfolio Generator</title>
+</head>
+<body>
+    <h2>Upload Resume</h2>
+
+    <input type="file" id="resume" />
+    <button onclick="uploadResume()">Generate Portfolio</button>
+
+    <div id="output"></div>
+
+    <script>
+        async function uploadResume() {
+            const fileInput = document.getElementById('resume');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select a file");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('resume', file);
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            document.getElementById('output').innerHTML = `
+                <h1>${data.name}</h1>
+                <p>${data.summary}</p>
+
+                <h3>Skills</h3>
+                <ul>${data.skills.map(s => `<li>${s}</li>`).join('')}</ul>
+
+                <h3>Projects</h3>
+                <ul>${data.projects.map(p => `<li>${p}</li>`).join('')}</ul>
+            `;
+        }
+    </script>
+</body>
+</html>
