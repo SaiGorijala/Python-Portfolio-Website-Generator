@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        FRONTEND_VM = "frontend@51.21.220.107 "
-        BACKEND_VM  = "backend@172.31.46.171"
+        FRONTEND_VM = "frontend@your-frontend-ip"
+        BACKEND_VM  = "backend@your-backend-ip"
         APP_DIR     = "/home/ubuntu/app"
     }
 
@@ -15,27 +15,15 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'master',
-                    url: 'https://github.com/SaiGorijala/Python-Portfolio-Website-Generator.git'
+                checkout scm
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Deploy to Backend') {
             steps {
-                sh '''
-                python3 -m venv venv
-                . venv/bin/activate
-                pip install -r requirements.txt
-                '''
-            }
-        }
-
-        stage('Deploy to Backend VM (Private)') {
-            steps {
-                sshagent(['ssh -i "pair.pem" ubuntu@172.31.46.171']) {
+                sshagent(['backend-ssh-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no $BACKEND_VM '
-                        rm -rf $APP_DIR &&
                         mkdir -p $APP_DIR
                     '
 
@@ -43,23 +31,20 @@ pipeline {
 
                     ssh -o StrictHostKeyChecking=no $BACKEND_VM '
                         cd $APP_DIR &&
-                        python3 -m venv venv &&
-                        . venv/bin/activate &&
-                        pip install -r requirements.txt &&
+                        source venv/bin/activate &&
                         pkill -f app.py || true &&
-                        nohup python3 app.py > app.log 2>&1 &
+                        nohup python app.py > app.log 2>&1 &
                     '
                     """
                 }
             }
         }
 
-        stage('Deploy to Frontend VM') {
+        stage('Deploy to Frontend') {
             steps {
-                sshagent(['ssh -i "pair.pem" ubuntu@ec2-51-21-220-107.eu-north-1.compute.amazonaws.com']) {
+                sshagent(['frontend-ssh-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no $FRONTEND_VM '
-                        rm -rf $APP_DIR &&
                         mkdir -p $APP_DIR
                     '
 
@@ -67,11 +52,9 @@ pipeline {
 
                     ssh -o StrictHostKeyChecking=no $FRONTEND_VM '
                         cd $APP_DIR &&
-                        python3 -m venv venv &&
-                        . venv/bin/activate &&
-                        pip install -r requirements.txt &&
+                        source venv/bin/activate &&
                         pkill -f app.py || true &&
-                        nohup python3 app.py > app.log 2>&1 &
+                        nohup python app.py > app.log 2>&1 &
                     '
                     """
                 }
