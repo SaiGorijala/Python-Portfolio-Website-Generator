@@ -21,7 +21,7 @@ pipeline {
 
         stage('Deploy to Backend') {
             steps {
-                sshagent(['ssh -i "pair.pem" ubuntu@172.31.46.171']) {
+                sshagent(['backend-ssh-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no $BACKEND_VM '
                         mkdir -p $APP_DIR
@@ -42,7 +42,7 @@ pipeline {
 
         stage('Deploy to Frontend') {
             steps {
-                sshagent(['ssh -i "pair.pem" ubuntu@ec2-51-21-220-107.eu-north-1.compute.amazonaws.com']) {
+                sshagent(['frontend-ssh-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no $FRONTEND_VM '
                         mkdir -p $APP_DIR
