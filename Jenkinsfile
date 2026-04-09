@@ -31,7 +31,11 @@ pipeline {
 
                     ssh -o StrictHostKeyChecking=no $BACKEND_VM '
                         cd $APP_DIR &&
-                        source venv/bin/activate &&
+                        if [ ! -d "venv" ]; then
+                            python3 -m venv venv
+                        fi &&
+                        . venv/bin/activate &&
+                        pip install -r requirements.txt &&
                         pkill -f app.py || true &&
                         nohup python app.py > app.log 2>&1 &
                     '
@@ -52,7 +56,11 @@ pipeline {
 
                     ssh -o StrictHostKeyChecking=no $FRONTEND_VM '
                         cd $APP_DIR &&
-                        source venv/bin/activate &&
+                        if [ ! -d "venv" ]; then
+                            python3 -m venv venv
+                        fi &&
+                        . venv/bin/activate &&
+                        pip install -r requirements.txt &&
                         pkill -f app.py || true &&
                         nohup python app.py > app.log 2>&1 &
                     '
