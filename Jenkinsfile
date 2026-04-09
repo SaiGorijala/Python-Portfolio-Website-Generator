@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "your-dockerhub-username/portfolio-generator"
-        TAG = "${BUILD_NUMBER}"
         FRONTEND_VM = "frontend@your-frontend-ip"
-        BACKEND_VM = "backend@your-backend-ip"
+        BACKEND_VM  = "backend@your-backend-ip"
+        APP_DIR     = "/home/ubuntu/app"
     }
 
     triggers {
@@ -21,54 +20,58 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Install Dependencies') {
             steps {
-                sh "docker build -t $IMAGE_NAME:$TAG ."
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install -r requirements.txt
+                '''
             }
         }
 
-        stage('Login to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'USER',
-                    passwordVariable: 'PASS'
-                )]) {
-                    sh "echo $PASS | docker login -u $USER --password-stdin"
-                }
-            }
-        }
-
-        stage('Push Image') {
-            steps {
-                sh "docker push $IMAGE_NAME:$TAG"
-            }
-        }
-
-        stage('Deploy Backend (Private VM)') {
+        stage('Deploy to Backend VM (Private)') {
             steps {
                 sshagent(['backend-ssh-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no $BACKEND_VM '
-                        docker pull $IMAGE_NAME:$TAG &&
-                        docker stop backend || true &&
-                        docker rm backend || true &&
-                        docker run -d -p 8000:8000 --name backend $IMAGE_NAME:$TAG
+                        rm -rf $APP_DIR &&
+                        mkdir -p $APP_DIR
+                    '
+
+                    scp -o StrictHostKeyChecking=no -r * $BACKEND_VM:$APP_DIR
+
+                    ssh -o StrictHostKeyChecking=no $BACKEND_VM '
+                        cd $APP_DIR &&
+                        python3 -m venv venv &&
+                        . venv/bin/activate &&
+                        pip install -r requirements.txt &&
+                        pkill -f app.py || true &&
+                        nohup python3 app.py > app.log 2>&1 &
                     '
                     """
                 }
             }
         }
 
-        stage('Deploy Frontend VM') {
+        stage('Deploy to Frontend VM') {
             steps {
                 sshagent(['frontend-ssh-key']) {
                     sh """
                     ssh -o StrictHostKeyChecking=no $FRONTEND_VM '
-                        docker pull $IMAGE_NAME:$TAG &&
-                        docker stop frontend || true &&
-                        docker rm frontend || true &&
-                        docker run -d -p 80:8000 --name frontend $IMAGE_NAME:$TAG
+                        rm -rf $APP_DIR &&
+                        mkdir -p $APP_DIR
+                    '
+
+                    scp -o StrictHostKeyChecking=no -r * $FRONTEND_VM:$APP_DIR
+
+                    ssh -o StrictHostKeyChecking=no $FRONTEND_VM '
+                        cd $APP_DIR &&
+                        python3 -m venv venv &&
+                        . venv/bin/activate &&
+                        pip install -r requirements.txt &&
+                        pkill -f app.py || true &&
+                        nohup python3 app.py > app.log 2>&1 &
                     '
                     """
                 }
