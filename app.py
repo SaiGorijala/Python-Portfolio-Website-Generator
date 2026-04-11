@@ -3,7 +3,8 @@ from flask import Flask, request, jsonify, abort, render_template
 from werkzeug.utils import secure_filename
 import PyPDF2
 
-__version__ = "1.0.1"
+# Application version
+__version__ = "1.0.2"
 
 app = Flask(__name__)
 
@@ -58,28 +59,35 @@ def parse_resume(text):
 
 @app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template("index.html", version=__version__)
 
 
-@app.route('/api/upload', methods=['POST'])
-def upload():
-    if 'resume' not in request.files:
-        abort(400)
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        abort(400, "No file part")
 
-    file = request.files['resume']
+    file = request.files['file']
 
-    if file.filename == '' or not allowed_file(file.filename):
-        abort(400)
+    if file.filename == '':
+        abort(400, "No selected file")
 
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(filepath)
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
 
-    text = extract_text_from_pdf(filepath)
-    data = parse_resume(text)
+        text = extract_text_from_pdf(filepath)
+        parsed = parse_resume(text)
 
-    return jsonify(data)
+        return jsonify({
+            "version": __version__,
+            "parsed": parsed
+        })
+
+    abort(400, "Invalid file type")
 
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=80, debug=True)
+if __name__ == "__main__":
+    # IMPORTANT: Run on 0.0.0.0 so EC2 can expose it
+    app.run(host="0.0.0.0", port=5000, debug=True)
