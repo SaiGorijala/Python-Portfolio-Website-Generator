@@ -35,9 +35,10 @@ pipeline {
                             python3 -m venv venv
                         fi &&
                         . venv/bin/activate &&
+                        pip install --upgrade pip &&
                         pip install -r requirements.txt &&
-                        pkill -f app.py || true &&
-                        nohup python3 app.py --host=0.0.0.0 --port=5000 > app.log 2>&1 &
+                        pkill -f "python3 app.py" || true &&
+                        nohup python3 app.py --host=0.0.0.0 --port=5000 > backend.log 2>&1 &
                     '
                     """
                 }
@@ -60,9 +61,10 @@ pipeline {
                             python3 -m venv venv
                         fi &&
                         . venv/bin/activate &&
+                        pip install --upgrade pip &&
                         pip install -r requirements.txt &&
-                        pkill -f app.py || true &&
-                        nohup python3 app.py --host=0.0.0.0 --port=5000 > app.log 2>&1 &
+                        pkill -f "python3 app.py" || true &&
+                        nohup python3 app.py --host=0.0.0.0 --port=5000 > frontend.log 2>&1 &
                     '
                     """
                 }
