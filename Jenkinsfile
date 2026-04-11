@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        FRONTEND_VM = "ubuntu@13.48.29.250"
+        FRONTEND_VM = "ubuntu@13.62.226.35"
         BACKEND_VM  = "ubuntu@10.0.0.134"
         APP_DIR     = "/home/ubuntu/app"
     }
