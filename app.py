@@ -3,6 +3,8 @@ from flask import Flask, request, jsonify, abort, render_template
 from werkzeug.utils import secure_filename
 import PyPDF2
 
+__version__ = "1.0.0"
+
 app = Flask(__name__)
 
 UPLOAD_FOLDER = 'uploads'
