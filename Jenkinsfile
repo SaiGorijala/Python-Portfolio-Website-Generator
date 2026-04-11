@@ -37,7 +37,7 @@ pipeline {
                         . venv/bin/activate &&
                         pip install -r requirements.txt &&
                         pkill -f app.py || true &&
-                        nohup python app.py > app.log 2>&1 &
+                        nohup python3 app.py --host=0.0.0.0 --port=5000 > app.log 2>&1 &
                     '
                     """
                 }
@@ -62,7 +62,7 @@ pipeline {
                         . venv/bin/activate &&
                         pip install -r requirements.txt &&
                         pkill -f app.py || true &&
-                        nohup python app.py > app.log 2>&1 &
+                        nohup python3 app.py --host=0.0.0.0 --port=5000 > app.log 2>&1 &
                     '
                     """
                 }
